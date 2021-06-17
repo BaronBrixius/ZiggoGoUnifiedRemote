@@ -4,30 +4,30 @@ local keyboard = libs.keyboard;
 
 --@help Home
 actions.home = function()
-	keyboard.stroke("ctrl", "home")
+    keyboard.stroke("ctrl", "home")
 end
 
 actions.tv_replay = function()
-	keyboard.stroke("ctrl", "pgup")
+    keyboard.stroke("ctrl", "pgup")
 end
 
 actions.movies_series = function()
-	keyboard.stroke("ctrl", "pgdown")
+    keyboard.stroke("ctrl", "pgdown")
 end
 
 --@help Lower volume
 actions.volume_down = function()
-	keyboard.stroke("ctrl","shift","alt","O");
+    keyboard.stroke("ctrl","shift","alt","O");
 end
 
 --@help Mute volume
 actions.volume_mute = function()
-	keyboard.stroke("ctrl","shift","alt","M");
+    keyboard.stroke("ctrl","shift","alt","M");
 end
 
 --@help Raise volume
 actions.volume_up = function()
-	keyboard.stroke("ctrl","shift","alt","P");
+    keyboard.stroke("ctrl","shift","alt","P");
 end
 
 --@help Pause playback
@@ -44,27 +44,27 @@ end
 
 --@help Navigate up
 actions.up = function()
-	keyboard.stroke("ctrl","shift","alt","up");
+    keyboard.stroke("ctrl","shift","alt","up");
 end
 
 --@help Navigate right
 actions.right = function()
-	keyboard.stroke("ctrl","shift","alt","right");
+    keyboard.stroke("ctrl","shift","alt","right");
 end
 
 --@help Navigate down
 actions.down = function()
-	keyboard.stroke("ctrl","shift","alt","down");
+    keyboard.stroke("ctrl","shift","alt","down");
 end
 
 --@help Navigate left
 actions.left = function()
-	keyboard.stroke("ctrl","shift","alt","left");
+    keyboard.stroke("ctrl","shift","alt","left");
 end
 
 --@help Select current item
 actions.select = function()
-	keyboard.stroke("ctrl","shift","alt","end");
+    keyboard.stroke("ctrl","shift","alt","end");
 end
 
 
