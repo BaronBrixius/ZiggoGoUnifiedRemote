@@ -2,7 +2,6 @@
 <layout color="#A40000">
     <grid>
         <row>
-            <!--      <button icon="home" onTap="home" />-->
             <button icon="window" onTap="live_tv" />
             <button icon="web" onTap="replays" />
         </row>

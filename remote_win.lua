@@ -2,7 +2,7 @@ local keyboard = libs.keyboard;
 --local win = libs.win;
 --local utf8 = libs.utf8;
 
---@help LiveTV
+--@help Live TV
 actions.live_tv = function()
     keyboard.stroke("ctrl", "pgup")
 end

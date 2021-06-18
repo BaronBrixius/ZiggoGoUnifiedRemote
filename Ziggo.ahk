@@ -26,6 +26,7 @@ return
 
 ^PgUp::
 	NavigateZiggo("https://www.ziggogo.tv/nl/tv/tv-kijken.html")			;Live TV Page
+	Sleep 1000
 	ChangeLiveChannelSelection(0)
 return
 
@@ -176,12 +177,12 @@ InitializeReplaySelection() {
 		ConnectZiggo()
 
 	PageInst.WaitForLoad()
-	Sleep 1200
+	Sleep 1000
 
 	JS =
 	(
 		var newActive = document.getElementsByClassName('epg-grid-programs__line')[0].firstElementChild;
-		while (newActive.getBoundingClientRect().right < 400) {
+		while (newActive.getBoundingClientRect().right < 650) {
 			newActive = newActive.nextElementSibling;
 		}
 		newActive.click();
