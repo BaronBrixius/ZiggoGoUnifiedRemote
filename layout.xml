@@ -3,8 +3,8 @@
     <grid>
         <row>
             <!--      <button icon="home" onTap="home" />-->
-            <button icon="window" onTap="tv_replay" />
-            <!--      <button icon="web" onTap="movies_series" />-->
+            <button icon="window" onTap="live_tv" />
+            <button icon="web" onTap="replays" />
         </row>
         <row>
             <button icon="rwd" onTap="jumpbackwards" />

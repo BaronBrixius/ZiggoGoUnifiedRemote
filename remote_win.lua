@@ -2,16 +2,13 @@ local keyboard = libs.keyboard;
 --local win = libs.win;
 --local utf8 = libs.utf8;
 
---@help Home
-actions.home = function()
-    keyboard.stroke("ctrl", "home")
-end
-
-actions.tv_replay = function()
+--@help LiveTV
+actions.live_tv = function()
     keyboard.stroke("ctrl", "pgup")
 end
 
-actions.movies_series = function()
+--@help Replays
+actions.replays = function()
     keyboard.stroke("ctrl", "pgdown")
 end
 
@@ -33,26 +30,31 @@ end
 --@help Navigate up
 actions.up = function()
     keyboard.stroke("ctrl","shift","alt","up");
+    keyboard.stroke("ctrl","shift","alt","I");
 end
 
 --@help Navigate right
 actions.right = function()
     keyboard.stroke("ctrl","shift","alt","right");
+    keyboard.stroke("ctrl","shift","alt","L");
 end
 
 --@help Navigate down
 actions.down = function()
     keyboard.stroke("ctrl","shift","alt","down");
+    keyboard.stroke("ctrl","shift","alt","K");
 end
 
 --@help Navigate left
 actions.left = function()
     keyboard.stroke("ctrl","shift","alt","left");
+    keyboard.stroke("ctrl","shift","alt","J");
 end
 
 --@help Select current item
 actions.select = function()
     keyboard.stroke("ctrl","shift","alt","end");
+    keyboard.stroke("ctrl","shift","alt","N");
 end
 
 --@help Select current item

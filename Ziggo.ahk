@@ -1,12 +1,11 @@
 #NoEnv
 SetBatchLines, -1
-
 ;#Warn  ; Enable warnings to assist with detecting common errors.
 
 #Include C:/Users/Max/Documents/Chrome.ahk
 
 global PageInst := false
-global state := false	;when numeric, current channel selection, otherwise used as label of current activity (e.g. "watching")
+global selection := 0	;current channel selection
 global HorizontalScrollJsString := "
 (
 	var bounding = newActive.getBoundingClientRect();
@@ -22,22 +21,19 @@ global HorizontalScrollJsString := "
 return
 
 ^Home::
-	NavigateZiggo("https://www.ziggogo.tv/nl")	;Home Page
-	state := "home"
+
 return
 
 ^PgUp::
-	NavigateZiggo("https://www.ziggogo.tv/nl/tv/tv-kijken.html")			;TV & Replay Page
-	state := 0
+	NavigateZiggo("https://www.ziggogo.tv/nl/tv/tv-kijken.html")			;Live TV Page
 	ChangeLiveChannelSelection(0)
 return
 
 ^PgDn::
-	NavigateZiggo("https://www.ziggogo.tv/nl/tv/tv-gids-replay.html")	;Movies & Series Page
-	state := "replay"
+	NavigateZiggo("https://www.ziggogo.tv/nl/tv/tv-gids-replay.html")	;Replay Page
+	InitializeReplaySelection()
 return
 
-;^Del::EndConnection()
 !^+End::ClickLiveChannelSelection()
 !^+Up::ChangeLiveChannelSelection(-5)
 !^+Right::ChangeLiveChannelSelection(1)
@@ -53,19 +49,17 @@ return
 !^+K::ChangeReplaySelectionDown()
 !^+J::ChangeReplaySelectionLeft()
 !^+L::ChangeReplaySelectionRight()
-
+!^+N::SelectReplay()
 
 ConnectZiggo() {
 	if (Chromes := Chrome.FindInstances()) {
 		ChromeInst := {"base": Chrome, "DebugPort": Chromes.MinIndex()}
-		state := FindState(ChromeInst)
 	} else {
 		ChromeInst := new Chrome("C:\Users\Max\AppData\Local\Google\Chrome\User Data\Profile 3", "https://www.ziggogo.tv/nl")
-		state := "home"
-		;pid := ChromeInst.PID
-		;WinWait, ahk_pid %pid%
-		;WinMove, ahk_pid %pid%,, 5000, 0
-		;WinMaximize, ahk_pid %pid%
+		pid := ChromeInst.PID
+		WinWait, ahk_pid %pid%
+		WinMove, ahk_pid %pid%,, 5000, 0
+		WinMaximize, ahk_pid %pid%
 	}
 
 	if !(PageInst := ChromeInst.GetPage()) {
@@ -75,24 +69,6 @@ ConnectZiggo() {
 	}
 
 	;PageInst.WaitForLoad()
-}
-
-FindState(ChromeInst) {
-	url := ChromeInst.GetPageList()[1]["url"]
-
-	if (!InStr(url, "ziggogo.tv"))
-		return false
-
-	if (InStr(url, "#action=watch"))
-		return "watching"
-
-	if (InStr(url, "tv/tv-kijken.html"))
-		return 0
-
-	if (InStr(url, "movies-series-xl/ontdek.html"))
-		return "replay"
-
-	return false
 }
 
 NavigateZiggo(url) {
@@ -145,15 +121,10 @@ ClickLiveChannelSelection() {
 	if (!PageConnectionExists())
 		ConnectZiggo()
 
-	if state is not integer
-		return
-
 	try {
 		PageInst.Evaluate("document.getElementsByClassName('button play-button positioner positioner-container')["
-			. state
+			. selection
 			. "].click();")
-
-		state := "watching"
 	} catch e {
 	}
 
@@ -161,25 +132,22 @@ ClickLiveChannelSelection() {
 	SetAudioOutputDevice()
 }
 
-ChangeLiveChannelSelection(state_diff){
+ChangeLiveChannelSelection(selection_diff){
 	if (!PageConnectionExists())
 		ConnectZiggo()
 
-	if state is not integer
-		return
-
 	try {
 		PageInst.Evaluate("document.getElementsByClassName('live-channel-item')["
-			. state
+			. selection
 			. "].style.removeProperty('border');")
 
-		CalculateSelection(state_diff)
+		CalculateSelection(selection_diff)
 
 		PageInst.Evaluate("")
 
 		JS =
 		(
-			var elm = document.getElementsByClassName('live-channel-item')[%state%];
+			var elm = document.getElementsByClassName('live-channel-item')[%selection%];
 			elm.style.setProperty('border', '4px solid #f48c00');
 			elm.scrollIntoView({behavior: "smooth", block: 'center'})
 		)
@@ -188,20 +156,42 @@ ChangeLiveChannelSelection(state_diff){
 	}
 }
 
-CalculateSelection(state_diff) {
+CalculateSelection(selection_diff) {
 	try {
 		num_channels := PageInst.Evaluate("document.getElementsByClassName('live-channel-item').length;").value
 	} catch e {
 		num_channels := 50
 	}
-	state := state + state_diff
-	if (state < 0)
-		state := state + num_channels
-	else if (state >= num_channels)
-		state := state - num_channels
+	selection := selection + selection_diff
+	if (selection < 0)
+		selection := selection + num_channels
+	else if (selection >= num_channels)
+		selection := selection - num_channels
 }
 
 ; ============ Replays ===============
+
+InitializeReplaySelection() {
+	if (!PageConnectionExists())
+		ConnectZiggo()
+
+	PageInst.WaitForLoad()
+	Sleep 1200
+
+	JS =
+	(
+		var newActive = document.getElementsByClassName('epg-grid-programs__line')[0].firstElementChild;
+		while (newActive.getBoundingClientRect().right < 400) {
+			newActive = newActive.nextElementSibling;
+		}
+		newActive.click();
+	)
+
+	try {
+		PageInst.Evaluate(JS)
+	} catch ex {
+	}
+}
 
 ChangeReplaySelectionLeft() {
 	ChangeReplaySelectionHorizontal("previousElementSibling")
@@ -243,7 +233,7 @@ ChangeReplaySelectionVertical(sibling){
 	(
 		var oldActive = document.getElementsByClassName('epg-grid-program-cell--active')[0];
 		var oldActiveBound = oldActive.getBoundingClientRect();
-		var horizontalTarget = oldActiveBound.left + (oldActiveBound.width / 3);
+		var horizontalTarget = oldActiveBound.left + Math.min(200,oldActiveBound.width / 3);
 
 		var parent = oldActive.parentElement.%sibling%;
 		if (parent != null) {
@@ -253,11 +243,24 @@ ChangeReplaySelectionVertical(sibling){
 			}
 			newActive.click();
 			%HorizontalScrollJsString%
-			newActive.scrollIntoView({behavior: "smooth", block: 'center'})
+			newActive.scrollIntoView({block: 'center'})
 		}
 	)
 
-	PageInst.Evaluate(JS)
+	try {
+		PageInst.Evaluate(JS)
+	} catch e {
+	}
+}
+
+SelectReplay() {
+	if (!PageConnectionExists())
+		ConnectZiggo()
+
+	try {
+		PageInst.Evaluate("document.getElementsByClassName('button button--primary button-with-options')[0].click()")
+	} catch e {
+	}
 }
 
 ; ============ Player ===============
@@ -289,8 +292,6 @@ ChangeVolume(volume_diff) {
 	if (!PageConnectionExists())
 		ConnectZiggo()
 
-	if (state != "watching")
-		return
 	try {
 		volume := PageInst.Evaluate("document.getElementsByClassName('player-linear-video')[0].children[0].volume;").value
 
@@ -311,9 +312,6 @@ ChangeVolume(volume_diff) {
 ToggleMute() {
 	if (!PageConnectionExists())
 		ConnectZiggo()
-
-	if (state != "watching")
-		return
 
 	try {
 		PageInst.Evaluate("document.getElementsByClassName('clickable-block player-ui-volume__snippet player-ui-control-button')[0].click();")
