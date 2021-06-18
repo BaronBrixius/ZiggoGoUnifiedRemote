@@ -30,18 +30,6 @@ actions.volume_up = function()
     keyboard.stroke("ctrl","shift","alt","P");
 end
 
---@help Pause playback
---actions.pause = function()
---    local hwnd = FindWindow();
---    keyboard.stroke("next");
---end
-
---@help Toggle playback state
---actions.play_pause = function()
---    local hwnd = FindWindow();
---    keyboard.stroke("space");
---end
-
 --@help Navigate up
 actions.up = function()
     keyboard.stroke("ctrl","shift","alt","up");
@@ -67,31 +55,17 @@ actions.select = function()
     keyboard.stroke("ctrl","shift","alt","end");
 end
 
+--@help Select current item
+actions.jumpbackwards = function()
+    keyboard.stroke("ctrl","shift","alt","R");
+end
 
---@help Seek forward
---actions.forward = function()
---    local hwnd = FindWindow();
---    keyboard.stroke("right");
---end
+--@help Select current item
+actions.playpause = function()
+    keyboard.stroke("ctrl","shift","alt","T");
+end
 
---@help Seek backward
---actions.rewind = function()
---    local hwnd = FindWindow();
---    keyboard.stroke("left");
---end
-
---@help Fullscreen view
---actions.fullscreen = function()
---    local hwnd = FindWindow();
---    keyboard.stroke("F");
---end
-
---@help Windowed view
---actions.window = function()
---    local hwnd = FindWindow();
---    keyboard.stroke("escape");
---end
-
---actions.skip_intro = function()
---    keyboard.stroke("s");
---end
+--@help Select current item
+actions.jumpforwards = function()
+    keyboard.stroke("ctrl","shift","alt","F");
+end
