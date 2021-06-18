@@ -3,11 +3,10 @@ SetBatchLines, -1
 
 ;#Warn  ; Enable warnings to assist with detecting common errors.
 
-#Include C:/Users/Max\Documents/Chrome.ahk
+#Include C:/Users/Max/Documents/Chrome.ahk
 
 global PageInst := false
 global state := false	;when numeric, current channel selection, otherwise used as label of current activity (e.g. "watching")
-
 global HorizontalScrollJsString := "
 (
 	var bounding = newActive.getBoundingClientRect();
@@ -19,81 +18,8 @@ global HorizontalScrollJsString := "
 )"
 
 ^Insert::	;testing method
-	ChangeReplaySelectionLeft()
+
 return
-
-ChangeReplaySelectionLeft() {
-	ChangeReplaySelectionHorizontal("previousElementSibling")
-}
-ChangeReplaySelectionRight() {
-	ChangeReplaySelectionHorizontal("nextElementSibling")
-}
-
-ChangeReplaySelectionHorizontal(sibling) {
-	if (!PageConnectionExists())
-		ConnectZiggo()
-
-	JS =
-	(
-	var newActive = document.getElementsByClassName('epg-grid-program-cell--active')[0].%sibling%;
-	newActive.click();
-	%HorizontalScrollJsString%
-	)
-
-	try {
-		PageInst.Evaluate(JS)
-	} catch ex {
-	}
-}
-
-
-;	var newActive = document.getElementsByClassName('epg-grid-program-cell--active')[0].%sibling%;
-;	newActive.click();
-;
-;	var viewBound = document.getElementsByClassName("epg-grid__programs")[0].getBoundingClientRect();
-;
-;	//checks 1/3 into the element, would be half but I feel there's a preference to see the start rather than the end
-;	var bounding = newActive.getBoundingClientRect();
-;	var horizontalTarget = bounding.left + Math.min(150, bounding.width / 3);
-;
-;	var numLeftClicks = (viewBound.left - horizontalTarget) / viewBound.width;
-;
-;	for (var i = 0; i < numLeftClicks; i++) {
-;		document.getElementsByClassName('epg-grid-arrows__button epg-grid-arrows__button--%scrollDirection%')[0].click();
-;	}
-;	)
-
-ChangeReplaySelectionUp() {
-	ChangeReplaySelectionVertical("previousElementSibling")
-}
-
-ChangeReplaySelectionDown() {
-	ChangeReplaySelectionVertical("nextElementSibling")
-}
-
-ChangeReplaySelectionVertical(sibling){
-	if (!PageConnectionExists())
-		ConnectZiggo()
-
-	JS =
-	(
-		var oldActive = document.getElementsByClassName('epg-grid-program-cell--active')[0];
-		var oldActiveBound = oldActive.getBoundingClientRect();
-		var horizontalTarget = oldActiveBound.left + (oldActiveBound.width / 3);
-
-		var parent = oldActive.parentElement.%sibling%;
-		if (parent != null) {
-			var newActive = parent.lastElementChild;
-			while (newActive.getBoundingClientRect().left > horizontalTarget) {
-				newActive = newActive.previousElementSibling;
-			}
-			newActive.click();
-			%HorizontalScrollJsString%
-		}
-	)
-
-	PageInst.Evaluate(JS)
-}
 
 ^Home::
 	NavigateZiggo("https://www.ziggogo.tv/nl")	;Home Page
@@ -180,6 +106,19 @@ NavigateZiggo(url) {
 		LogIn()
 }
 
+PageConnectionExists() {
+	if (!PageInst)
+		return false
+
+	if (!PageInst.Connected) {
+		PageInst.Disconnect()	;just to be sure everything is cleaned up
+		PageInst := false
+		return false
+	}
+
+	return true
+}
+
 IsLoggedOut() {
 	try {
 		LoginText := PageInst.Evaluate("document.getElementsByClassName('clickable-block snippet-button utility-bar-button')[0].title;").value
@@ -200,49 +139,7 @@ LogIn() {
 	}
 }
 
-PageConnectionExists() {
-	if (!PageInst)
-		return false
-
-	if (!PageInst.Connected) {
-		PageInst.Disconnect()	;just to be sure everything is cleaned up
-		PageInst := false
-		return false
-	}
-
-	return true
-}
-
-SetAudioOutputDevice(outputDevice := "50UHD_LCD_TV") {
-		;get permission to access audio devices
-		;(async () => {
-		;	await navigator.mediaDevices.getUserMedia({audio: true});
-		;	let devices = await navigator.mediaDevices.enumerateDevices();
-		;	console.log(devices);
-		;	})();
-
-	JS =
-	(
-		navigator.mediaDevices.enumerateDevices()
-			.then(function(deviceInfos) {
-				for (var i = 0; i != deviceInfos.length; i++) {
-					var deviceInfo = deviceInfos[i];
-					if (deviceInfo.kind == 'audiooutput' && deviceInfo.label.startsWith("50UHD_LCD_TV")) {
-						document.getElementsByClassName('player-linear-video')[0].children[0].setSinkId(deviceInfo.deviceId);
-						return true;
-					}
-				}
-				return false;
-		});
-	)
-
-	try {
-		PageInst.Evaluate(JS)
-		return true
-	} catch e {
-		return false
-	}
-}
+; ============ Live TV ===============
 
 ClickLiveChannelSelection() {
 	if (!PageConnectionExists())
@@ -278,12 +175,15 @@ ChangeLiveChannelSelection(state_diff){
 
 		CalculateSelection(state_diff)
 
-		PageInst.Evaluate("document.getElementsByClassName('live-channel-item')["
-			. state
-			. "].style.setProperty('border', '4px solid #f48c00');")
-		PageInst.Evaluate("document.getElementsByClassName('live-channel-item')["
-			. state
-			. "].focus();") ;.scrollIntoView();
+		PageInst.Evaluate("")
+
+		JS =
+		(
+			var elm = document.getElementsByClassName('live-channel-item')[%state%];
+			elm.style.setProperty('border', '4px solid #f48c00');
+			elm.scrollIntoView({behavior: "smooth", block: 'center'})
+		)
+		PageInst.Evaluate(JS)
 	} catch e {
 	}
 }
@@ -300,6 +200,90 @@ CalculateSelection(state_diff) {
 	else if (state >= num_channels)
 		state := state - num_channels
 }
+
+; ============ Replays ===============
+
+ChangeReplaySelectionLeft() {
+	ChangeReplaySelectionHorizontal("previousElementSibling")
+}
+ChangeReplaySelectionRight() {
+	ChangeReplaySelectionHorizontal("nextElementSibling")
+}
+
+ChangeReplaySelectionHorizontal(sibling) {
+	if (!PageConnectionExists())
+		ConnectZiggo()
+
+	JS =
+	(
+	var newActive = document.getElementsByClassName('epg-grid-program-cell--active')[0].%sibling%;
+	newActive.click();
+	%HorizontalScrollJsString%
+	)
+
+	try {
+		PageInst.Evaluate(JS)
+	} catch ex {
+	}
+}
+
+ChangeReplaySelectionUp() {
+	ChangeReplaySelectionVertical("previousElementSibling")
+}
+
+ChangeReplaySelectionDown() {
+	ChangeReplaySelectionVertical("nextElementSibling")
+}
+
+ChangeReplaySelectionVertical(sibling){
+	if (!PageConnectionExists())
+		ConnectZiggo()
+
+	JS =
+	(
+		var oldActive = document.getElementsByClassName('epg-grid-program-cell--active')[0];
+		var oldActiveBound = oldActive.getBoundingClientRect();
+		var horizontalTarget = oldActiveBound.left + (oldActiveBound.width / 3);
+
+		var parent = oldActive.parentElement.%sibling%;
+		if (parent != null) {
+			var newActive = parent.lastElementChild;
+			while (newActive.getBoundingClientRect().left > horizontalTarget) {
+				newActive = newActive.previousElementSibling;
+			}
+			newActive.click();
+			%HorizontalScrollJsString%
+			newActive.scrollIntoView({behavior: "smooth", block: 'center'})
+		}
+	)
+
+	PageInst.Evaluate(JS)
+}
+
+; ============ Player ===============
+
+PlayPause() {
+	try {
+		PageInst.Evaluate("document.getElementsByClassName('clickable-block ui-cd-playback-control__play')[0].click();")
+	} catch e {
+	}
+}
+
+JumpPlayerBackwards() {
+	try {
+		PageInst.Evaluate("document.getElementsByClassName('clickable-block ui-cd-playback-control__backward player-ui-control-button')[0].click();")
+	} catch e {
+	}
+}
+
+JumpPlayerForwards() {
+	try {
+		PageInst.Evaluate("document.getElementsByClassName('clickable-block ui-cd-playback-control__forward player-ui-control-button')[0].click();")
+	} catch e {
+	}
+}
+
+; ============ Volume ===============
 
 ChangeVolume(volume_diff) {
 	if (!PageConnectionExists())
@@ -338,23 +322,33 @@ ToggleMute() {
 	}
 }
 
-PlayPause() {
-	try {
-		PageInst.Evaluate("document.getElementsByClassName('clickable-block ui-cd-playback-control__play')[0].click();")
-	} catch e {
-	}
-}
+SetAudioOutputDevice(outputDevice := "50UHD_LCD_TV") {
+		;get permission to access audio devices
+		;(async () => {
+		;	await navigator.mediaDevices.getUserMedia({audio: true});
+		;	let devices = await navigator.mediaDevices.enumerateDevices();
+		;	console.log(devices);
+		;	})();
 
-JumpPlayerBackwards() {
-	try {
-		PageInst.Evaluate("document.getElementsByClassName('clickable-block ui-cd-playback-control__backward player-ui-control-button')[0].click();")
-	} catch e {
-	}
-}
+	JS =
+	(
+		navigator.mediaDevices.enumerateDevices()
+			.then(function(deviceInfos) {
+				for (var i = 0; i != deviceInfos.length; i++) {
+					var deviceInfo = deviceInfos[i];
+					if (deviceInfo.kind == 'audiooutput' && deviceInfo.label.startsWith("50UHD_LCD_TV")) {
+						document.getElementsByClassName('player-linear-video')[0].children[0].setSinkId(deviceInfo.deviceId);
+						return true;
+					}
+				}
+				return false;
+		});
+	)
 
-JumpPlayerForwards() {
 	try {
-		PageInst.Evaluate("document.getElementsByClassName('clickable-block ui-cd-playback-control__forward player-ui-control-button')[0].click();")
+		PageInst.Evaluate(JS)
+		return true
 	} catch e {
+		return false
 	}
 }
