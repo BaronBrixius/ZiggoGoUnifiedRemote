@@ -17,11 +17,7 @@ global HorizontalScrollJsString := "
 )"
 
 ^Insert::	;testing method
-	msgbox % PageInst.Connected
-return
-
-^Home::
-
+	
 return
 
 ^PgUp::
@@ -53,20 +49,8 @@ return
 !^+L::ChangeReplaySelectionRight()
 !^+N::SelectReplay()
 
-StartShowOver() {
-	if (!PageConnectionExists())
-		ConnectZiggo()
-		
-	try {
-		PageInst.Evaluate("document.getElementsByClassName('button button--tertiary player-ui-linear-tile__primary-action--startover')[0].click();")
-	} catch e {
-	}
-	;try {
-	;	PageInst.Evaluate("document.getElementsByClassName('button button--tertiary player-vod-bottom-bar__primary-action--back-to-live')[0].click();")
-	;} catch e {
-	;}
-	
-}
+; ============ Global ===============
+
 ConnectZiggo() {
 	if (Chromes := Chrome.FindInstances()) {
 		ChromeInst := {"base": Chrome, "DebugPort": Chromes.MinIndex()}
@@ -93,7 +77,8 @@ NavigateZiggo(url) {
 
 	PageInst.Call("Page.navigate", {"url": url})
 	PageInst.WaitForLoad()
-
+	
+	Sleep 300
 	if IsLoggedOut()
 		LogIn()
 }
@@ -112,37 +97,35 @@ PageConnectionExists() {
 }
 
 IsLoggedOut() {
-	try {
-		LoginText := PageInst.Evaluate("document.getElementsByClassName('clickable-block snippet-button utility-bar-button')[0].title;").value
-		return LoginText == "login"
-	} catch e {
-		return false
-	}
+	return RunJS("document.getElementsByClassName('clickable-block snippet-button utility-bar-button')[0].title == 'login';")
 }
 
 LogIn() {
 	try {
 		PageInst.Evaluate("document.getElementsByClassName('clickable-block snippet-button utility-bar-button')[0].click();")
 		Sleep 500
-		PageInst.Evaluate("document.getElementById('USERNAME').value = 'claudje1000@gmail.com';")
-		PageInst.Evaluate("document.getElementById('PASSWORD').value = 'VoDaFoNe1000';")
-		PageInst.Evaluate("document.getElementsByClassName('button button--primary login-form-button button--with-text')[0].click();")
+		PageInst.Evaluate("document.getElementById('USERNAME').value = 'claudje1000@gmail.com'; document.getElementById('PASSWORD').value = 'VoDaFoNe1000'; document.getElementsByClassName('button button--primary login-form-button button--with-text')[0].click();")
 	} catch e {
 	}
+}
+
+RunJS(JS) {
+	if (!PageConnectionExists())
+		ConnectZiggo()
+		
+	try {
+		return PageInst.Evaluate(JS).value
+	} catch e {
+		return false
+	}	
 }
 
 ; ============ Live TV ===============
 
 ClickLiveChannelSelection() {
-	if (!PageConnectionExists())
-		ConnectZiggo()
-
-	try {
-		PageInst.Evaluate("document.getElementsByClassName('button play-button positioner positioner-container')["
+	RunJS("document.getElementsByClassName('button play-button positioner positioner-container')["
 			. selection
 			. "].click();")
-	} catch e {
-	}
 
 	PageInst.WaitForLoad()
 	SetAudioOutputDevice()
@@ -217,20 +200,14 @@ ChangeReplaySelectionRight() {
 }
 
 ChangeReplaySelectionHorizontal(sibling) {
-	if (!PageConnectionExists())
-		ConnectZiggo()
-
 	JS =
 	(
-	var newActive = document.getElementsByClassName('epg-grid-program-cell--active')[0].%sibling%;
-	newActive.click();
-	%HorizontalScrollJsString%
+		var newActive = document.getElementsByClassName('epg-grid-program-cell--active')[0].%sibling%;
+		newActive.click();
+		%HorizontalScrollJsString%
 	)
 
-	try {
-		PageInst.Evaluate(JS)
-	} catch ex {
-	}
+	RunJS(JS)
 }
 
 ChangeReplaySelectionUp() {
@@ -242,9 +219,6 @@ ChangeReplaySelectionDown() {
 }
 
 ChangeReplaySelectionVertical(sibling){
-	if (!PageConnectionExists())
-		ConnectZiggo()
-
 	JS =
 	(
 		var oldActive = document.getElementsByClassName('epg-grid-program-cell--active')[0];
@@ -263,45 +237,30 @@ ChangeReplaySelectionVertical(sibling){
 		}
 	)
 
-	try {
-		PageInst.Evaluate(JS)
-	} catch e {
-	}
+	RunJS(JS)
 }
 
 SelectReplay() {
-	if (!PageConnectionExists())
-		ConnectZiggo()
-
-	try {
-		PageInst.Evaluate("document.getElementsByClassName('button button--primary button-with-options')[0].click()")
-	} catch e {
-	}
+	RunJS("document.getElementsByClassName('button button--primary button-with-options')[0].click()")
 }
 
 ; ============ Player ===============
 
 PlayPause() {
-	try {
-		PageInst.Evaluate("document.getElementsByClassName('clickable-block ui-cd-playback-control__play')[0].click();")
-	} catch e {
-	}
+	RunJS("document.getElementsByClassName('clickable-block ui-cd-playback-control__play')[0].click();")
 }
 
 JumpPlayerBackwards() {
-	try {
-		PageInst.Evaluate("document.getElementsByClassName('clickable-block ui-cd-playback-control__backward player-ui-control-button')[0].click();")
-	} catch e {
-	}
+	RunJS("document.getElementsByClassName('clickable-block ui-cd-playback-control__backward player-ui-control-button')[0].click();")
 }
 
 JumpPlayerForwards() {
-	try {
-		PageInst.Evaluate("document.getElementsByClassName('clickable-block ui-cd-playback-control__forward player-ui-control-button')[0].click();")
-	} catch e {
-	}
+	RunJS("document.getElementsByClassName('clickable-block ui-cd-playback-control__forward player-ui-control-button')[0].click();")
 }
 
+StartShowOver() {
+	RunJS("document.getElementsByClassName('button button--tertiary player-ui-linear-tile__primary-action--startover')[0].click();")
+}
 ; ============ Sound ===============
 
 ;ChangeVolume(volume_diff) {
@@ -326,23 +285,17 @@ JumpPlayerForwards() {
 ;}
 
 ToggleMute() {
-	if (!PageConnectionExists())
-		ConnectZiggo()
-
-	try {
-		PageInst.Evaluate("document.getElementsByClassName('clickable-block player-ui-volume__snippet player-ui-control-button')[0].click();")
-		SetAudioOutputDevice()	; just in case -- if user is messing with Mute then output device might have messed up
-	} catch e {
-	}
+	RunJS("document.getElementsByClassName('clickable-block player-ui-volume__snippet player-ui-control-button')[0].click();")
+	SetAudioOutputDevice()	; just in case -- if user is messing with Mute then sound output device might have messed up
 }
 
 SetAudioOutputDevice(outputDevice := "50UHD_LCD_TV") {
-		;get permission to access audio devices
-		;(async () => {
-		;	await navigator.mediaDevices.getUserMedia({audio: true});
-		;	let devices = await navigator.mediaDevices.enumerateDevices();
-		;	console.log(devices);
-		;	})();
+	;get permission to access audio devices
+	;(async () => {
+	;	await navigator.mediaDevices.getUserMedia({audio: true});
+	;	let devices = await navigator.mediaDevices.enumerateDevices();
+	;	console.log(devices);
+	;	})();
 
 	JS =
 	(
@@ -359,10 +312,5 @@ SetAudioOutputDevice(outputDevice := "50UHD_LCD_TV") {
 		});
 	)
 
-	try {
-		PageInst.Evaluate(JS)
-		return true
-	} catch e {
-		return false
-	}
+	RunJS(JS)
 }
