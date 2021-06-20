@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?><!-- onLaunch="launch" onVolumeUp="volume_up" onVolumeDown="volume_down" onResume="resume" onPause="pause" -->
 <layout color="#A40000">
-    <grid>
+    <grid>`
         <row>
             <button icon="window" onTap="live_tv" />
             <button icon="web" onTap="replays" />
@@ -12,11 +12,14 @@
         </row>
         <row weight="2">
             <grid>
+<!--                <row>-->
+<!--                    <button icon="vup" onTap="volume_up" />-->
+<!--                </row>-->
+<!--                <row>-->
+<!--                    <button icon="vdown" onTap="volume_down" />-->
+<!--                </row>-->
                 <row>
-                    <button icon="vup" onTap="volume_up" />
-                </row>
-                <row>
-                    <button icon="vdown" onTap="volume_down" />
+                    <button icon="rotateleft" onTap="start_over"/>
                 </row>
                 <row>
                     <button icon="vmute" onTap="volume_mute" />

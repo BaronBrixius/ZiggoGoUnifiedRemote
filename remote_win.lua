@@ -12,19 +12,19 @@ actions.replays = function()
     keyboard.stroke("ctrl", "pgdown")
 end
 
---@help Lower volume
-actions.volume_down = function()
-    keyboard.stroke("ctrl","shift","alt","O");
-end
+-- --@help Lower volume
+--actions.volume_down = function()
+--    keyboard.stroke("ctrl","shift","alt","O");
+--end
+
+-- --@help Raise volume
+--actions.volume_up = function()
+--    keyboard.stroke("ctrl","shift","alt","P");
+--end
 
 --@help Mute volume
 actions.volume_mute = function()
     keyboard.stroke("ctrl","shift","alt","M");
-end
-
---@help Raise volume
-actions.volume_up = function()
-    keyboard.stroke("ctrl","shift","alt","P");
 end
 
 --@help Navigate up
@@ -57,17 +57,22 @@ actions.select = function()
     keyboard.stroke("ctrl","shift","alt","N");
 end
 
---@help Select current item
+--@help Jump player backwards
 actions.jumpbackwards = function()
     keyboard.stroke("ctrl","shift","alt","R");
 end
 
---@help Select current item
+--@help Playpause
 actions.playpause = function()
     keyboard.stroke("ctrl","shift","alt","T");
 end
 
---@help Select current item
+--@help Jump player forwards
 actions.jumpforwards = function()
     keyboard.stroke("ctrl","shift","alt","F");
+end
+
+--@help Start show over
+actions.start_over = function()
+    keyboard.stroke("ctrl","shift","alt","Y");
 end

@@ -17,7 +17,7 @@ global HorizontalScrollJsString := "
 )"
 
 ^Insert::	;testing method
-
+	msgbox % PageInst.Connected
 return
 
 ^Home::
@@ -40,18 +40,33 @@ return
 !^+Right::ChangeLiveChannelSelection(1)
 !^+Down::ChangeLiveChannelSelection(5)
 !^+Left::ChangeLiveChannelSelection(-1)
-!^+P::ChangeVolume(.05)
-!^+O::ChangeVolume(-.05)
+;!^+P::ChangeVolume(.05)
+;!^+O::ChangeVolume(-.05)
 !^+M::ToggleMute()
 !^+R::JumpPlayerBackwards()
 !^+F::JumpPlayerForwards()
 !^+T::PlayPause()
+!^+Y::StartShowOver()
 !^+I::ChangeReplaySelectionUp()
 !^+K::ChangeReplaySelectionDown()
 !^+J::ChangeReplaySelectionLeft()
 !^+L::ChangeReplaySelectionRight()
 !^+N::SelectReplay()
 
+StartShowOver() {
+	if (!PageConnectionExists())
+		ConnectZiggo()
+		
+	try {
+		PageInst.Evaluate("document.getElementsByClassName('button button--tertiary player-ui-linear-tile__primary-action--startover')[0].click();")
+	} catch e {
+	}
+	;try {
+	;	PageInst.Evaluate("document.getElementsByClassName('button button--tertiary player-vod-bottom-bar__primary-action--back-to-live')[0].click();")
+	;} catch e {
+	;}
+	
+}
 ConnectZiggo() {
 	if (Chromes := Chrome.FindInstances()) {
 		ChromeInst := {"base": Chrome, "DebugPort": Chromes.MinIndex()}
@@ -88,7 +103,7 @@ PageConnectionExists() {
 		return false
 
 	if (!PageInst.Connected) {
-		PageInst.Disconnect()	;just to be sure everything is cleaned up
+		PageInst.Disconnect()	;make sure everything is cleaned up internally
 		PageInst := false
 		return false
 	}
@@ -287,28 +302,28 @@ JumpPlayerForwards() {
 	}
 }
 
-; ============ Volume ===============
+; ============ Sound ===============
 
-ChangeVolume(volume_diff) {
-	if (!PageConnectionExists())
-		ConnectZiggo()
-
-	try {
-		volume := PageInst.Evaluate("document.getElementsByClassName('player-linear-video')[0].children[0].volume;").value
-
-		volume := volume + volume_diff
-		if (volume > 1)
-			volume := 1
-		if (volume < 0)
-			volume := 0
-
-		;PageInst.Call("DOM.setAttributeValue", {"nodeId": DescNode.NodeId, "name": "value", "value": volume})
-		PageInst.Evaluate("document.getElementsByClassName('player-linear-video')[0].children[0].volume = "
-			. volume
-			. ";")
-	} catch e {
-	}
-}
+;ChangeVolume(volume_diff) {
+;	if (!PageConnectionExists())
+;		ConnectZiggo()
+;
+;	try {
+;		volume := PageInst.Evaluate("document.getElementsByClassName('player-linear-video')[0].children[0].volume;").value
+;
+;		volume := volume + volume_diff
+;		if (volume > 1)
+;			volume := 1
+;		if (volume < 0)
+;			volume := 0
+;
+;		;PageInst.Call("DOM.setAttributeValue", {"nodeId": DescNode.NodeId, "name": "value", "value": volume})
+;		PageInst.Evaluate("document.getElementsByClassName('player-linear-video')[0].children[0].volume = "
+;			. volume
+;			. ";")
+;	} catch e {
+;	}
+;}
 
 ToggleMute() {
 	if (!PageConnectionExists())
