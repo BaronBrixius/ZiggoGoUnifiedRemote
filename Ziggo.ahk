@@ -17,7 +17,7 @@ global HorizontalScrollJsString := "
 )"
 
 ^Insert::	;testing method
-	
+
 return
 
 ^PgUp::
@@ -77,10 +77,11 @@ NavigateZiggo(url) {
 
 	PageInst.Call("Page.navigate", {"url": url})
 	PageInst.WaitForLoad()
-	
+
 	Sleep 300
-	if IsLoggedOut()
+	if (IsLoggedOut()) {
 		LogIn()
+	}
 }
 
 PageConnectionExists() {
@@ -97,7 +98,7 @@ PageConnectionExists() {
 }
 
 IsLoggedOut() {
-	return RunJS("document.getElementsByClassName('clickable-block snippet-button utility-bar-button')[0].title == 'login';")
+	return RunJS("document.getElementsByClassName('clickable-block snippet-button utility-bar-button')[0].title;") == "login"
 }
 
 LogIn() {
@@ -112,7 +113,7 @@ LogIn() {
 RunJS(JS) {
 	if (!PageConnectionExists())
 		ConnectZiggo()
-		
+
 	try {
 		return PageInst.Evaluate(JS).value
 	} catch e {
