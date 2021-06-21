@@ -8,7 +8,7 @@ global PageInst := false
 global HorizontalScrollJsString := "
 (
 	var bounding = newActive.getBoundingClientRect();
-	//checks 1/3 into the element, not half as it's assumed users prefer to see the start rather than the end
+	//checks 1/3 into the element rather than half as it's assumed users prefer to see the start rather than the end
 	var horizontalTarget = bounding.left + (bounding.width / 3);
 	if (!newActive.isSameNode(document.elementFromPoint(horizontalTarget,bounding.top))) {
 		document.getElementsByClassName('epg-grid-arrows__button epg-grid-arrows__button--'.concat(horizontalTarget < 700 ? 'left' : 'right'))[0].click();
@@ -71,11 +71,9 @@ NavigateZiggo(url) {
 	}
 	PageInst.WaitForLoad()
 
-	;LoginIfNeeded()
-
-	;if (IsLoggedOut()) {
-	;	LogIn()
-	;}
+	if (IsLoggedOut()) {
+		LogIn()
+	}
 }
 
 PageConnectionExists() {
@@ -119,15 +117,25 @@ RunJS(JS) {
 
 OpenLiveChannelsPage(){
 	NavigateZiggo("https://www.ziggogo.tv/nl/tv/tv-kijken.html")			;Live TV Page
-	Sleep 1000
+	Sleep 500
 	ChangeLiveChannelSelection(0)
 }
 
 ClickLiveChannelSelection() {
-	RunJS("document.getElementsByClassName('button play-button positioner positioner-container')[%selection%].click();")
+	JS =
+	(
+		var channels = document.getElementsByClassName('live-channel-item');
+		for (var i = 0; i < channels.length; i++) {
+			if (channels[i].style['border'] == '4px solid rgb(244, 140, 0)') {
+				channels[selection].click();
+				break;
+			}
+		}
+	)
+	RunJS(JS)
 
 	PageInst.WaitForLoad()
-	Sleep 200
+	Sleep 300
 	SetAudioOutputDevice()
 }
 
@@ -135,9 +143,8 @@ ChangeLiveChannelSelection(selection_diff){
 	JS =
 	(
 		var channels = document.getElementsByClassName('live-channel-item');
-	
-		var selection;
-		for (selection = 0; selection < channels.length; selection++) {
+
+		for (var selection = 0; selection < channels.length; selection++) {
 			if (channels[selection].style['border'] == '4px solid rgb(244, 140, 0)') {
 				channels[selection].style.removeProperty('border');
 				break;
@@ -146,14 +153,13 @@ ChangeLiveChannelSelection(selection_diff){
 		if (selection == channels.length) {
 			selection = 0;
 		}
-		
-		//js doesn't modulo negative numbers correctly
-		selection = (selection + %selection_diff% + channels.length) `% channels.length;
-		
+
+		selection = (selection + %selection_diff% + channels.length) `% channels.length;	//js doesn't modulo negative numbers correctly
+
 		channels[selection].style.setProperty('border', '4px solid #f48c00');
 		channels[selection].scrollIntoView({behavior: 'smooth', block: 'center'});
 	)
-	
+
 	RunJS(JS)
 }
 
@@ -161,12 +167,12 @@ ChangeLiveChannelSelection(selection_diff){
 
 OpenReplayPage() {
 	NavigateZiggo("https://www.ziggogo.tv/nl/tv/tv-gids-replay.html")	;Replay Page
-	Sleep 1000
+	Sleep 600
 
 	JS =
 	(
 		var newActive = document.getElementsByClassName('epg-grid-programs__line')[0].firstElementChild;
-		while (newActive.getBoundingClientRect().right < 650) {
+		while (newActive.getBoundingClientRect().right < 750) {
 			newActive = newActive.nextElementSibling;
 		}
 		newActive.click();
