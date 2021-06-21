@@ -5,7 +5,6 @@ SetBatchLines, -1
 #Include C:/Users/Max/Documents/Chrome.ahk
 
 global PageInst := false
-global selection := 0	;current channel selection
 global HorizontalScrollJsString := "
 (
 	var bounding = newActive.getBoundingClientRect();
@@ -75,13 +74,17 @@ NavigateZiggo(url) {
 	if (!PageConnectionExists())
 		ConnectZiggo()
 
-	PageInst.Call("Page.navigate", {"url": url})
+	try {
+		PageInst.Call("Page.navigate", {"url": url})
+	} catch ex {
+	}
 	PageInst.WaitForLoad()
 
-	Sleep 300
-	if (IsLoggedOut()) {
-		LogIn()
-	}
+	;LoginIfNeeded()
+
+	;if (IsLoggedOut()) {
+	;	LogIn()
+	;}
 }
 
 PageConnectionExists() {
@@ -124,49 +127,37 @@ RunJS(JS) {
 ; ============ Live TV ===============
 
 ClickLiveChannelSelection() {
-	RunJS("document.getElementsByClassName('button play-button positioner positioner-container')["
-			. selection
-			. "].click();")
+	RunJS("document.getElementsByClassName('button play-button positioner positioner-container')[%selection%].click();")
 
 	PageInst.WaitForLoad()
+	Sleep 200
 	SetAudioOutputDevice()
 }
 
 ChangeLiveChannelSelection(selection_diff){
-	if (!PageConnectionExists())
-		ConnectZiggo()
-
-	try {
-		PageInst.Evaluate("document.getElementsByClassName('live-channel-item')["
-			. selection
-			. "].style.removeProperty('border');")
-
-		CalculateSelection(selection_diff)
-
-		PageInst.Evaluate("")
-
-		JS =
-		(
-			var elm = document.getElementsByClassName('live-channel-item')[%selection%];
-			elm.style.setProperty('border', '4px solid #f48c00');
-			elm.scrollIntoView({behavior: "smooth", block: 'center'})
-		)
-		PageInst.Evaluate(JS)
-	} catch e {
-	}
-}
-
-CalculateSelection(selection_diff) {
-	try {
-		num_channels := PageInst.Evaluate("document.getElementsByClassName('live-channel-item').length;").value
-	} catch e {
-		num_channels := 50
-	}
-	selection := selection + selection_diff
-	if (selection < 0)
-		selection := selection + num_channels
-	else if (selection >= num_channels)
-		selection := selection - num_channels
+	JS =
+	(
+		var channels = document.getElementsByClassName('live-channel-item');
+	
+		var selection;
+		for (selection = 0; selection < channels.length; selection++) {
+			if (channels[selection].style['border'] == '4px solid rgb(244, 140, 0)') {
+				channels[selection].style.removeProperty('border');
+				break;
+			}
+		}
+		if (selection == channels.length) {
+			selection = 0;
+		}
+		
+		//js doesn't modulo negative numbers correctly
+		selection = (selection + %selection_diff% + channels.length) `% channels.length;
+		
+		channels[selection].style.setProperty('border', '4px solid #f48c00');
+		channels[selection].scrollIntoView({behavior: 'smooth', block: 'center'});
+	)
+	
+	RunJS(JS)
 }
 
 ; ============ Replays ===============
