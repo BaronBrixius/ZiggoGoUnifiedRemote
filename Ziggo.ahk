@@ -19,17 +19,8 @@ global HorizontalScrollJsString := "
 
 return
 
-^PgUp::
-	NavigateZiggo("https://www.ziggogo.tv/nl/tv/tv-kijken.html")			;Live TV Page
-	Sleep 1000
-	ChangeLiveChannelSelection(0)
-return
-
-^PgDn::
-	NavigateZiggo("https://www.ziggogo.tv/nl/tv/tv-gids-replay.html")	;Replay Page
-	InitializeReplaySelection()
-return
-
+^PgUp::OpenLiveChannelsPage()
+^PgDn::OpenReplayPage()
 !^+End::ClickLiveChannelSelection()
 !^+Up::ChangeLiveChannelSelection(-5)
 !^+Right::ChangeLiveChannelSelection(1)
@@ -126,6 +117,12 @@ RunJS(JS) {
 
 ; ============ Live TV ===============
 
+OpenLiveChannelsPage(){
+	NavigateZiggo("https://www.ziggogo.tv/nl/tv/tv-kijken.html")			;Live TV Page
+	Sleep 1000
+	ChangeLiveChannelSelection(0)
+}
+
 ClickLiveChannelSelection() {
 	RunJS("document.getElementsByClassName('button play-button positioner positioner-container')[%selection%].click();")
 
@@ -162,11 +159,8 @@ ChangeLiveChannelSelection(selection_diff){
 
 ; ============ Replays ===============
 
-InitializeReplaySelection() {
-	if (!PageConnectionExists())
-		ConnectZiggo()
-
-	PageInst.WaitForLoad()
+OpenReplayPage() {
+	NavigateZiggo("https://www.ziggogo.tv/nl/tv/tv-gids-replay.html")	;Replay Page
 	Sleep 1000
 
 	JS =
@@ -178,10 +172,8 @@ InitializeReplaySelection() {
 		newActive.click();
 	)
 
-	try {
-		PageInst.Evaluate(JS)
-	} catch ex {
-	}
+	RunJS(JS)
+
 }
 
 ChangeReplaySelectionLeft() {
