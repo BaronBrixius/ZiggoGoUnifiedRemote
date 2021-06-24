@@ -41,6 +41,13 @@ return
 
 ; ============ Global ===============
 
+EmptyMem(PID="AHK Rocks"){
+    pid:=(pid="AHK Rocks") ? DllCall("GetCurrentProcessId") : pid
+    h:=DllCall("OpenProcess", "UInt", 0x001F0FFF, "Int", 0, "Int", pid)
+    DllCall("SetProcessWorkingSetSize", "UInt", h, "Int", -1, "Int", -1)
+    DllCall("CloseHandle", "Int", h)
+}
+
 ConnectZiggo() {
 	if (Chromes := Chrome.FindInstances()) {
 		ChromeInst := {"base": Chrome, "DebugPort": Chromes.MinIndex()}
@@ -71,9 +78,8 @@ NavigateZiggo(url) {
 	}
 	PageInst.WaitForLoad()
 
-	if (IsLoggedOut()) {
-		LogIn()
-	}
+	Sleep 300
+	TryLogIn()
 }
 
 PageConnectionExists() {
@@ -89,28 +95,37 @@ PageConnectionExists() {
 	return true
 }
 
-IsLoggedOut() {
-	return RunJS("document.getElementsByClassName('clickable-block snippet-button utility-bar-button')[0].title;") == "login"
+TryLogIn() {
+	JS =
+	(
+		if (document.getElementsByClassName('clickable-block snippet-button utility-bar-button')[0].title == 'login') {
+			document.getElementsByClassName('clickable-block snippet-button utility-bar-button')[0].click();
+			setTimeout(function() {
+			document.getElementById('USERNAME').value = 'claudje1000@gmail.com';
+			document.getElementById('PASSWORD').value = 'VoDaFoNe1000';
+			document.getElementsByClassName('button button--primary login-form-button button--with-text')[0].click();
+			}, 500);
+		}
+	)
+	
+	RunJS(JS)
 }
 
-LogIn() {
-	try {
-		PageInst.Evaluate("document.getElementsByClassName('clickable-block snippet-button utility-bar-button')[0].click();")
-		Sleep 500
-		PageInst.Evaluate("document.getElementById('USERNAME').value = 'claudje1000@gmail.com'; document.getElementById('PASSWORD').value = 'VoDaFoNe1000'; document.getElementsByClassName('button button--primary login-form-button button--with-text')[0].click();")
-	} catch e {
-	}
-}
-
-RunJS(JS) {
+RunJS(JS, emptyMem := 1) {
 	if (!PageConnectionExists())
 		ConnectZiggo()
 
+	value := ""
 	try {
-		return PageInst.Evaluate(JS).value
+		value := PageInst.Evaluate(JS).value || true
 	} catch e {
-		return false
-	}	
+		value := false
+	}
+	
+	if emptyMem
+		EmptyMem()
+
+	return value
 }
 
 ; ============ Live TV ===============
@@ -135,8 +150,9 @@ ClickLiveChannelSelection() {
 	RunJS(JS)
 
 	PageInst.WaitForLoad()
-	Sleep 300
+	Sleep 500
 	SetAudioOutputDevice()
+	SetVideoErrorObserver()
 }
 
 ChangeLiveChannelSelection(selection_diff){
@@ -160,7 +176,7 @@ ChangeLiveChannelSelection(selection_diff){
 		channels[selection].scrollIntoView({behavior: 'smooth', block: 'center'});
 	)
 
-	RunJS(JS)
+	RunJS(JS, 0)
 }
 
 ; ============ Replays ===============
@@ -168,7 +184,10 @@ ChangeLiveChannelSelection(selection_diff){
 OpenReplayPage() {
 	NavigateZiggo("https://www.ziggogo.tv/nl/tv/tv-gids-replay.html")	;Replay Page
 	Sleep 600
+	InitializeReplaySelection()
+}
 
+InitializeReplaySelection() {
 	JS =
 	(
 		var newActive = document.getElementsByClassName('epg-grid-programs__line')[0].firstElementChild;
@@ -179,11 +198,11 @@ OpenReplayPage() {
 	)
 
 	RunJS(JS)
-
 }
 
 ChangeReplaySelectionLeft() {
 	ChangeReplaySelectionHorizontal("previousElementSibling")
+		
 }
 ChangeReplaySelectionRight() {
 	ChangeReplaySelectionHorizontal("nextElementSibling")
@@ -197,7 +216,9 @@ ChangeReplaySelectionHorizontal(sibling) {
 		%HorizontalScrollJsString%
 	)
 
-	RunJS(JS)
+	if (!RunJS(JS, 0)) {
+		InitializeReplaySelection()
+	}
 }
 
 ChangeReplaySelectionUp() {
@@ -227,11 +248,17 @@ ChangeReplaySelectionVertical(sibling){
 		}
 	)
 
-	RunJS(JS)
+	if (!RunJS(JS, 0)) {
+		InitializeReplaySelection()
+	}
 }
 
 SelectReplay() {
 	RunJS("document.getElementsByClassName('button button--primary button-with-options')[0].click()")
+	;not setting audio/observer like live-channel selection because both methods are called and the other covers this -- should only be temporary
+	;Sleep 500
+	;SetAudioOutputDevice()
+	;SetVideoErrorObserver()
 }
 
 ; ============ Player ===============
@@ -251,6 +278,26 @@ JumpPlayerForwards() {
 StartShowOver() {
 	RunJS("document.getElementsByClassName('button button--tertiary player-ui-linear-tile__primary-action--startover')[0].click();")
 }
+
+SetVideoErrorObserver() {
+	JS =
+	(
+		var errorUI = document.getElementsByClassName('player-ui__error-screen')[0];
+		var errorObserver = new MutationObserver( () => {
+			setTimeout(function() {
+				let button = errorUI.getElementsByClassName('button button--primary button--with-text')[0];
+				if (button.innerText == 'HERSTART VIDEO') {
+					button.click();
+				}
+			}, 3000);
+		});
+		
+		errorObserver.observe(errorUI, {childList: true});
+	)
+	
+	RunJS(JS)
+}
+
 ; ============ Sound ===============
 
 ;ChangeVolume(volume_diff) {
@@ -292,9 +339,9 @@ SetAudioOutputDevice(outputDevice := "50UHD_LCD_TV") {
 		navigator.mediaDevices.enumerateDevices()
 			.then(function(deviceInfos) {
 				for (var i = 0; i != deviceInfos.length; i++) {
-					var deviceInfo = deviceInfos[i];
+					let deviceInfo = deviceInfos[i];
 					if (deviceInfo.kind == 'audiooutput' && deviceInfo.label.startsWith("50UHD_LCD_TV")) {
-						document.getElementsByClassName('player-linear-video')[0].children[0].setSinkId(deviceInfo.deviceId);
+						document.getElementsByTagName('video')[0].setSinkId(deviceInfo.deviceId);
 						return true;
 					}
 				}
