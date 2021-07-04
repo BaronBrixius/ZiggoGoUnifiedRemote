@@ -49,9 +49,12 @@ EmptyMem(PID="AHK Rocks"){
 }
 
 ConnectZiggo() {
-	if (Chromes := Chrome.FindInstances()) {
-		ChromeInst := {"base": Chrome, "DebugPort": Chromes.MinIndex()}
-	} else {
+	for Item in Chrome.FindInstances() {
+		if (Item = 9222)
+			ChromeInst := {"base": Chrome, "DebugPort": Item}
+	}
+
+	if (!ChromeInst) {
 		ChromeInst := new Chrome("C:\Users\Max\AppData\Local\Google\Chrome\User Data\Profile 3", "https://www.ziggogo.tv/nl")
 		pid := ChromeInst.PID
 		WinWait, ahk_pid %pid%
@@ -98,13 +101,14 @@ PageConnectionExists() {
 TryLogIn() {
 	JS =
 	(
-		if (document.getElementsByClassName('clickable-block snippet-button utility-bar-button')[0].title == 'login') {
-			document.getElementsByClassName('clickable-block snippet-button utility-bar-button')[0].click();
+		let loginButton = document.getElementsByClassName('clickable-block snippet-button utility-bar-button')[0];
+		if (loginButton.title == 'login') {
+			loginButton.click();
 			setTimeout(function() {
 				document.getElementById('USERNAME').value = 'claudje1000@gmail.com';
 				document.getElementById('PASSWORD').value = 'VoDaFoNe1000';
 				document.getElementsByClassName('button button--primary login-form-button button--with-text')[0].click();
-			}, 500);
+			}, 700);
 		}
 	)
 	
