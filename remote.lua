@@ -77,5 +77,5 @@ end
 
 --@help Close Ziggo
 actions.close_ziggo = function()
-	keyboard.stroke("ctrl","shift","alt","Y");
+	keyboard.stroke("ctrl","shift","alt","insert");
 end
