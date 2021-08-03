@@ -24,6 +24,9 @@
                 <row>
                     <button icon="vmute" onTap="volume_mute" />
                 </row>
+                <row>
+                    <button icon="docclose" onTap="close_ziggo" />
+                </row>
             </grid>
             <grid weight="2">
                 <row>

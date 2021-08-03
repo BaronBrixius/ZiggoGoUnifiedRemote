@@ -1,15 +1,13 @@
 local keyboard = libs.keyboard;
---local win = libs.win;
---local utf8 = libs.utf8;
 
 --@help Live TV
 actions.live_tv = function()
-    keyboard.stroke("ctrl", "pgup")
+    keyboard.stroke("ctrl","shift","alt", "pgup")
 end
 
 --@help Replays
 actions.replays = function()
-    keyboard.stroke("ctrl", "pgdown")
+    keyboard.stroke("ctrl","shift","alt", "pgdown")
 end
 
 -- --@help Lower volume
@@ -58,7 +56,7 @@ actions.select = function()
 end
 
 --@help Jump player backwards
-actions.jumpbackwards = function()
+actions.jump_backwards = function()
     keyboard.stroke("ctrl","shift","alt","R");
 end
 
@@ -68,11 +66,16 @@ actions.playpause = function()
 end
 
 --@help Jump player forwards
-actions.jumpforwards = function()
+actions.jump_forwards = function()
     keyboard.stroke("ctrl","shift","alt","F");
 end
 
 --@help Start show over
-actions.start_over = function()
+actions.start_show_over = function()
     keyboard.stroke("ctrl","shift","alt","Y");
+end
+
+--@help Close Ziggo
+actions.close_ziggo = function()
+    keyboard.stroke("ctrl","shift","alt","insert");
 end
