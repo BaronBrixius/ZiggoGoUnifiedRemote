@@ -19,7 +19,7 @@
 <!--                    <button icon="vdown" onTap="volume_down" />-->
 <!--                </row>-->
                 <row>
-                    <button icon="rotateleft" onTap="start_over"/>
+                    <button icon="rotateleft" onTap="start_show_over"/>
                 </row>
                 <row>
                     <button icon="vmute" onTap="volume_mute" />

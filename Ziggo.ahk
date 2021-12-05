@@ -51,7 +51,7 @@ RunJS(JS, emptyMem := 1) {
 
 	value := ""
 	try {
-		value := PageInst.Evaluate(JS).value || true
+		value := PageInst.Evaluate("{" JS "}").value || true
 	} catch e {
 		value := false
 	}
@@ -74,6 +74,7 @@ ConnectZiggo() {
 		ChromeInst := new Chrome("C:\Users\Max\AppData\Local\Google\Chrome\User Data\Profile 3", "https://www.ziggogo.tv/nl")
 		pid := ChromeInst.PID
 		WinWait, ahk_pid %pid%,, 3
+		Sleep 25
 		if ErrorLevel
 			Exit
 		
@@ -119,14 +120,14 @@ TryClosePopUpsAndLogIn() {
 	(
 		let loginDelay = 10;
 		
-		let dialogCancelButton = document.getElementsByClassName('button--secondary confirmation-buttons-cancel')[0];
+		let dialogCancelButton = document.getElementsByClassName('confirmation-buttons-cancel')[0];
 		if (typeof(dialogCancelButton) != 'undefined' && dialogCancelButton != null) {
 			dialogCancelButton.click();
 			loginDelay = 350;
 		}
 		
 		setTimeout(function() {
-			let loginButton = document.getElementsByClassName('clickable-block snippet-button utility-bar-button')[0];
+			let loginButton = document.getElementsByClassName('snippet-button utility-bar-button')[0];
 			if (loginButton.title == 'login') {
 				loginButton.click();
 				setTimeout(function() {
@@ -213,7 +214,7 @@ ChangeLiveChannelSelection(selection_diff){
 
 OpenReplayPage() {
 	NavigateZiggo("https://www.ziggogo.tv/nl/tv/tv-gids-replay.html")	;Replay Page
-	Sleep 500
+	Sleep 1000
 	InitializeReplaySelection()
 }
 
@@ -221,7 +222,7 @@ InitializeReplaySelection() {
 	JS =
 	(
 		var newActive = document.getElementsByClassName('epg-grid-programs__line')[0].firstElementChild;
-		while (newActive.getBoundingClientRect().right < 750) {
+		while (newActive.getBoundingClientRect().right < 750 && newActive.nextElementSibling) {
 			newActive = newActive.nextElementSibling;
 		}
 		newActive.click();
@@ -241,14 +242,20 @@ ChangeReplaySelectionRight() {
 ChangeReplaySelectionHorizontal(sibling) {
 	JS =
 	(
-		var newActive = document.getElementsByClassName('epg-grid-program-cell--active')[0].%sibling%;
-		newActive.click();
+		var oldActive = document.getElementsByClassName('epg-grid-program-cell--active')[0];
+		if (!oldActive) {
+			let newActive = document.getElementsByClassName('epg-grid-programs__line')[0].firstElementChild;
+			while (newActive.getBoundingClientRect().right < 750 && newActive.nextElementSibling) {
+				newActive = newActive.nextElementSibling;
+			}
+			newActive.click();
+			exit
+		}
+		oldActive.%sibling%.click();
 		%HorizontalScrollJsString%
 	)
 
-	if (!RunJS(JS, 0)) {
-		InitializeReplaySelection()
-	}
+	RunJS(JS, 0)
 }
 
 ChangeReplaySelectionUp() {
@@ -263,12 +270,20 @@ ChangeReplaySelectionVertical(sibling){
 	JS =
 	(
 		var oldActive = document.getElementsByClassName('epg-grid-program-cell--active')[0];
+		if (!oldActive) {
+			let newActive = document.getElementsByClassName('epg-grid-programs__line')[0].firstElementChild;
+			while (newActive.getBoundingClientRect().right < 750 && newActive.nextElementSibling) {
+				newActive = newActive.nextElementSibling;
+			}
+			newActive.click();
+			exit
+		}
 		var oldActiveBound = oldActive.getBoundingClientRect();
 		var horizontalTarget = oldActiveBound.left + Math.min(200,oldActiveBound.width / 3);
 
 		var parent = oldActive.parentElement.%sibling%;
-		if (parent != null) {
-			var newActive = parent.lastElementChild;
+		if (parent) {
+			let newActive = parent.lastElementChild;
 			while (newActive.getBoundingClientRect().left > horizontalTarget) {
 				newActive = newActive.previousElementSibling;
 			}
@@ -278,13 +293,11 @@ ChangeReplaySelectionVertical(sibling){
 		}
 	)
 
-	if (!RunJS(JS, 0)) {
-		InitializeReplaySelection()
-	}
+	RunJS(JS, 0)
 }
 
 SelectReplay() {
-	RunJS("document.getElementsByClassName('button button--primary button-with-options')[0].click()")
+	RunJS("document.getElementsByClassName('button-with-options')[0].click()")
 	;not setting audio/observer like live-channel selection because both methods are called and the other covers this -- not good practice but eh
 	;Sleep 500
 	;SetAudioOutputDevice()
@@ -294,19 +307,35 @@ SelectReplay() {
 ; ============ Player ===============
 
 PlayPause() {
-	RunJS("document.getElementsByClassName('clickable-block ui-cd-playback-control__play')[0].click();")
+	RunJS("document.querySelector('.ui-cd-playback-control__play').click();")
 }
 
 JumpPlayerBackwards() {
-	RunJS("document.getElementsByClassName('clickable-block ui-cd-playback-control__backward player-ui-control-button')[0].click();")
+	RunJS("document.getElementsByClassName('ui-cd-playback-control__backward player-ui-control-button')[0].click();")
 }
 
 JumpPlayerForwards() {
-	RunJS("document.getElementsByClassName('clickable-block ui-cd-playback-control__forward player-ui-control-button')[0].click();")
+	RunJS("document.getElementsByClassName('ui-cd-playback-control__forward player-ui-control-button')[0].click();")
 }
 
 StartShowOver() {
-	RunJS("document.getElementsByClassName('button button--tertiary player-ui-linear-tile__primary-action--startover')[0].click();")
+	JS =
+	(
+		let backToLiveButton = document.querySelector('.player-vod-bottom-bar__primary-action--back-to-live')
+		if (backToLiveButton) {
+			backToLiveButton.click()
+			exit
+		}
+		document.querySelector('.action-buttons-dropdown').click();
+		document.querySelector('.clickable-block.start-over-snippet').click();
+	)
+
+	RunJS(JS)
+	
+	PageInst.WaitForLoad()
+	Sleep 500
+	SetAudioOutputDevice()
+	SetVideoErrorObserver()
 }
 
 SetVideoErrorObserver() {
@@ -352,7 +381,7 @@ SetVideoErrorObserver() {
 ;}
 
 ToggleMute() {
-	RunJS("document.getElementsByClassName('clickable-block player-ui-volume__snippet player-ui-control-button')[0].click();")
+	RunJS("document.getElementsByClassName('player-ui-volume__snippet player-ui-control-button')[0].click();")
 	SetAudioOutputDevice()	; just in case -- if user is messing with Mute then sound output device might have messed up
 }
 
